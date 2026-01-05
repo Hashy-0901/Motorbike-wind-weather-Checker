@@ -1,0 +1,1113 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Motorcycle Wind Chill + Heat Planner</title>
+
+<style>
+ :root{
+   --bg:#f4f6f8; --card:#fff; --text:#0b1220; --muted:#5b6472;
+   --line:#e6e8ee; --accent:#1f4e79; --r:16px;
+
+   --results-bg:#1e1f23;
+   --results-text:#e9edf5;
+   --results-muted:#b7bcc7;
+ }
+
+ *{ box-sizing:border-box; }
+ body{
+   margin:0;
+   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+   background:var(--bg);
+   color:var(--text);
+   display:flex;
+   justify-content:center;
+   padding:16px;
+ }
+ .wrap{ width:100%; max-width:980px; }
+
+ header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; }
+ h1{ font-size:18px; margin:0; letter-spacing:.2px; }
+
+ .grid{ display:grid; gap:12px; }
+ .card{
+   background:var(--card);
+   border:1px solid var(--line);
+   border-radius:var(--r);
+   box-shadow: 0 10px 26px rgba(0,0,0,.06);
+   padding:14px;
+ }
+
+ /* Always-mobile layout */
+ .two{ display:grid; gap:12px; grid-template-columns: 1fr; }
+ .cols{ display:grid; gap:12px; grid-template-columns: 1fr; }
+
+ label{ display:block; font-weight:900; font-size:13px; margin-bottom:6px; }
+ .field{ display:flex; gap:8px; align-items:center; }
+
+ input, select{
+   width:100%;
+   padding:12px 12px;
+   font-size:16px;
+   border-radius:12px;
+   border:1px solid var(--line);
+   outline:none;
+   background:#fff;
+ }
+ input:focus, select:focus{
+   border-color:#c3d7ea;
+   box-shadow: 0 0 0 4px rgba(31,78,121,.08);
+ }
+ .unit{
+   min-width:56px;
+   text-align:center;
+   padding:10px 10px;
+   border:1px solid var(--line);
+   border-radius:12px;
+   background:#fafbfc;
+   font-weight:900;
+   color:var(--muted);
+ }
+
+ .pill{
+   padding:12px;
+   border-radius:14px;
+   border:1px solid var(--line);
+   background:#fff;
+ }
+
+ .big{ font-size:22px; font-weight:950; letter-spacing:.2px; }
+ .small{ margin-top:4px; color:var(--muted); font-size:13px; line-height:1.35; }
+ .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+
+ .sectionTitle{ font-size:14px; font-weight:950; margin:0 0 8px 0; letter-spacing:.2px; }
+
+ .toggles{ display:grid; gap:10px; }
+ .toggleRow{
+   display:flex; gap:10px; align-items:flex-start;
+   padding:10px 10px;
+   border:1px solid var(--line);
+   border-radius:14px;
+   background:#fff;
+ }
+ .toggleRow input[type="checkbox"]{ width:20px; height:20px; margin-top:2px; }
+ .toggleText b{ display:block; }
+ .toggleText span{ display:block; color:var(--muted); font-size:12.5px; margin-top:2px; }
+
+ .tag{
+   display:inline-block;
+   margin-top:8px;
+   font-size:12px;
+   font-weight:950;
+   padding:6px 10px;
+   border-radius:999px;
+   border:1px solid var(--line);
+   background:#fff;
+ }
+
+ .kpiRow{ display:grid; gap:10px; grid-template-columns: 1fr; }
+ .kpi{
+   border:1px solid var(--line);
+   border-radius:14px;
+   padding:10px 12px;
+   background:#fff;
+   transition: background-color .2s ease, border-color .2s ease;
+ }
+ .kpi .k{ font-size:12px; color:var(--muted); font-weight:800; }
+ .kpi .v{ font-size:16px; font-weight:950; margin-top:4px; }
+ .kpi .s{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+
+ .inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+ .miniBtn{
+   padding:10px 12px;
+   border-radius:12px;
+   border:1px solid var(--line);
+   background:#fff;
+   font-weight:900;
+   cursor:pointer;
+   white-space:nowrap;
+ }
+ .miniBtn.active{
+   border-color:transparent;
+   background:var(--accent);
+   color:#fff;
+ }
+ .status{ font-size:12.5px; color:var(--muted); margin-top:6px; }
+
+ footer{ margin-top:10px; color:var(--muted); font-size:12px; text-align:center; }
+
+ /* Dark results background container */
+ .resultsPanel{
+   margin-top:12px;
+   background:var(--results-bg);
+   border-radius:14px;
+   padding:12px;
+ }
+ .resultsPanel .resultsNote{ margin-top:10px; color:var(--results-muted); }
+ .resultsPanel .resultsNote a{ color:#cfe1ff; text-decoration:none; }
+ .resultsPanel .resultsNote a:hover{ text-decoration:underline; }
+
+ /* 12-hour strip */
+ .hourStripWrap{ margin-top:10px; border-top:1px dashed rgba(0,0,0,.12); padding-top:10px; }
+ .hourStripTitle{ font-weight:950; font-size:12px; margin:0 0 8px 0; color:var(--muted); }
+ .hourStrip{
+   display:flex; gap:8px; overflow-x:auto;
+   -webkit-overflow-scrolling:touch;
+   padding-bottom:6px;
+ }
+ .hourChip{
+   min-width:100px;
+   border-radius:12px;
+   padding:8px;
+   border:1px solid rgba(0,0,0,.18);
+   user-select:none;
+ }
+ .hourChip .t{ font-weight:950; font-size:13px; line-height:1.1; }
+ .hourChip .m{ font-size:12px; margin-top:4px; line-height:1.2; }
+ .hourChip .s{ font-size:11.5px; margin-top:2px; opacity:.92; line-height:1.2; }
+
+ /* Disabled look */
+ select:disabled, input:disabled{
+   opacity:0.6;
+   background:#f2f3f6;
+   cursor:not-allowed;
+ }
+
+ /* Accordion */
+ details{
+   border:1px solid var(--line);
+   border-radius:14px;
+   background:#fff;
+   padding:10px 12px;
+ }
+ summary{ cursor:pointer; font-weight:950; list-style:none; }
+ summary::-webkit-details-marker{ display:none; }
+ details .small{ margin-top:8px; }
+
+ .gear h2{ margin:0 0 8px 0; font-size:15px; letter-spacing:.2px; }
+ .gear h3{ margin:12px 0 6px 0; font-size:13px; letter-spacing:.2px; }
+ ul{ margin:0; padding-left:18px; line-height:1.45; }
+</style>
+</head>
+
+<body>
+ <div class="wrap">
+   <header>
+     <h1>Motorcycle Wind Chill + Heat Planner</h1>
+   </header>
+
+   <div class="grid">
+     <div class="two">
+       <!-- MAIN CARD -->
+       <div class="card">
+         <div class="cols">
+           <!-- Inputs -->
+           <div>
+             <p class="sectionTitle">Inputs</p>
+
+             <div style="display:grid; gap:12px;">
+               <!-- Mode -->
+               <div>
+                 <label>Mode</label>
+                 <div class="inline">
+                   <button type="button" class="miniBtn active" id="modeCold">Cold / Wind chill</button>
+                   <button type="button" class="miniBtn" id="modeHeat">Heat / Humidity</button>
+                 </div>
+                 <div class="small" id="modeNote">Cold mode uses wind chill with effective wind (bike speed + headwind).</div>
+               </div>
+
+               <div>
+                 <label for="temp">Air temperature</label>
+                 <div class="field">
+                   <input id="temp" type="number" step="0.1" value="5" inputmode="decimal" />
+                   <div class="unit">°C</div>
+                 </div>
+               </div>
+
+               <div>
+                 <label for="bike">Average riding speed</label>
+                 <div class="field">
+                   <input id="bike" type="number" step="1" value="60" inputmode="numeric" />
+                   <div class="unit">mph</div>
+                 </div>
+               </div>
+
+               <div>
+                 <label for="wind">Wind speed (weather)</label>
+                 <div class="field">
+                   <input id="wind" type="number" step="1" value="10" inputmode="numeric" />
+                   <div class="unit">mph</div>
+                 </div>
+               </div>
+
+               <!-- Trip duration -->
+               <div>
+                 <label for="trip">Trip duration</label>
+                 <div class="field">
+                   <input id="trip" type="number" step="5" value="45" inputmode="numeric" />
+                   <div class="unit">min</div>
+                 </div>
+                 <div class="small">Used to estimate what you’re likely to feel <b>during your ride</b>.</div>
+               </div>
+
+               <!-- Humidity (Heat mode) -->
+               <div id="humidityBlock">
+                 <label for="hum">Humidity (Heat mode)</label>
+                 <div class="field">
+                   <input id="hum" type="number" step="1" value="60" inputmode="numeric" />
+                   <div class="unit">%</div>
+                 </div>
+                 <div class="small" id="humNote">If you load a forecast, humidity will auto-fill (if available).</div>
+               </div>
+
+               <!-- Conditions toggle (Auto/Manual) -->
+               <div>
+                 <label>Conditions (Cold mode)</label>
+                 <div class="inline" style="margin-bottom:6px;">
+                   <button type="button" class="miniBtn active" id="condAuto">Auto</button>
+                   <button type="button" class="miniBtn" id="condManual">Manual</button>
+                 </div>
+
+                 <select id="wet" disabled>
+                   <option value="dry" selected>Dry</option>
+                   <option value="wet">Wet / Rain</option>
+                   <option value="freezing">Snow / Freezing rain</option>
+                 </select>
+
+                 <div class="small" id="condNote">Auto mode uses the forecast to set conditions.</div>
+               </div>
+
+               <!-- Forecast -->
+               <div class="pill">
+                 <label for="loc" style="margin:0 0 6px 0;">Forecast (optional)</label>
+                 <div class="inline">
+                   <input id="loc" type="text" placeholder="Enter town/city (e.g., Manchester)" />
+                   <button class="miniBtn" id="getForecast" type="button">Search</button>
+                 </div>
+                 <div class="status" id="forecastStatus">Pulls current + next 12 hours from Open-Meteo (if available).</div>
+
+                 <div class="hourStripWrap">
+                   <div class="hourStripTitle">Next 12 hours (colour = feels-like)</div>
+                   <div class="hourStrip" id="hourStrip" aria-label="Hourly feels-like strip"></div>
+                   <div class="status" id="stripStatus">Load a forecast to populate the strip.</div>
+                 </div>
+               </div>
+             </div>
+           </div>
+
+           <!-- Options + Results -->
+           <div>
+             <p class="sectionTitle">Options</p>
+
+             <div class="toggles">
+               <div class="toggleRow">
+                 <input id="tWindproof" type="checkbox" />
+                 <div class="toggleText">
+                   <b>Windproof outer / rain shell</b>
+                   <span>Blocks airflow; big comfort gain even when dry.</span>
+                 </div>
+               </div>
+
+               <div class="toggleRow">
+                 <input id="tHandguards" type="checkbox" />
+                 <div class="toggleText">
+                   <b>Handguards</b>
+                   <span>Reduces wind blast on hands.</span>
+                 </div>
+               </div>
+
+               <div class="toggleRow">
+                 <input id="tHeatedGrips" type="checkbox" />
+                 <div class="toggleText">
+                   <b>Heated grips</b>
+                   <span>Helps palms; still need wind protection for fingertips.</span>
+                 </div>
+               </div>
+
+               <div class="toggleRow">
+                 <input id="tHeatedGloves" type="checkbox" />
+                 <div class="toggleText">
+                   <b>Heated gloves</b>
+                   <span>Strongest “hands fix”.</span>
+                 </div>
+               </div>
+
+               <div class="toggleRow">
+                 <input id="tHeatedJacket" type="checkbox" />
+                 <div class="toggleText">
+                   <b>Heated jacket / vest</b>
+                   <span>Core warmth improves overall comfort and focus.</span>
+                 </div>
+               </div>
+             </div>
+
+             <!-- RESULTS PANEL -->
+             <div class="resultsPanel">
+               <div class="pill" id="feelsPill">
+                 <div class="big" id="feels">Feels like: —</div>
+                 <div class="small" id="details">Enter values to calculate.</div>
+                 <div class="small mono" id="breakdown" style="margin-top:8px;">—</div>
+
+                 <span class="tag" id="levelTag">—</span>
+                 <div class="small" id="duringRide" style="margin-top:10px;">—</div>
+               </div>
+
+               <div class="kpiRow" style="margin-top:12px;">
+                 <div class="kpi" id="kpiHands">
+                   <div class="k">Time to cold hands</div>
+                   <div class="v" id="timeHands">—</div>
+                   <div class="s" id="timeHandsNote">—</div>
+                 </div>
+
+                 <div class="kpi" id="kpiCore">
+                   <div class="k">Time to core chill</div>
+                   <div class="v" id="timeCore">—</div>
+                   <div class="s" id="timeCoreNote">—</div>
+                 </div>
+
+                 <div class="kpi" id="kpiHypo">
+                   <div class="k">Time to hypothermia risk (rough)</div>
+                   <div class="v" id="timeHypo">—</div>
+                   <div class="s" id="timeHypoNote">Depends on wetness, duration, fatigue, and your health</div>
+                 </div>
+
+                 <div class="kpi" id="kpiHyper">
+                   <div class="k">Time to hyperthermia risk (rough)</div>
+                   <div class="v" id="timeHyper">—</div>
+                   <div class="s" id="timeHyperNote">Heat risk increases with humidity, gear, and stop-start traffic</div>
+                 </div>
+               </div>
+
+               <div class="small resultsNote">
+                 Main result = current conditions only. The 12-hour strip is planning/preview.
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <!-- GEAR CARD -->
+       <div class="card gear">
+         <h2>What gear should I wear?</h2>
+
+         <div class="pill" style="margin-bottom:10px;">
+           <span class="tag" id="gearTag">—</span>
+           <div class="small" id="gearSummary" style="margin-top:6px;">—</div>
+         </div>
+
+         <h3>Gear checklist</h3>
+         <ul id="gearList"></ul>
+
+         <h3>Health / safety risks</h3>
+         <ul id="riskList"></ul>
+
+         <details style="margin-top:12px;">
+           <summary>More health risks (tap)</summary>
+           <div class="small">
+             <ul style="margin-top:8px;">
+               <li><b>Cold</b>: dexterity loss, slower reactions, frostnip/frostbite, hypothermia signs (shivering → confusion).</li>
+               <li><b>Heat</b>: dehydration, heat exhaustion (headache, dizziness, nausea), heat stroke (confusion, hot dry skin) — emergency.</li>
+               <li><b>Visibility</b>: rain/low sun/fog → keep visor clear, lights working, hi-vis helps.</li>
+               <li><b>Fatigue</b>: temperature stress increases tiredness; take breaks sooner than you think.</li>
+             </ul>
+           </div>
+         </details>
+
+         <div class="small" style="margin-top:10px;">
+           Guidance only (not medical advice). Risk depends on duration, wetness/humidity, fatigue, and your health.
+         </div>
+       </div>
+
+       <!-- EXTRA CARD: Bike checks + resources -->
+       <div class="card">
+         <h2 style="margin:0 0 8px 0; font-size:15px; letter-spacing:.2px;">Before you leave</h2>
+
+         <details open>
+           <summary>Quick bike checks</summary>
+           <div class="small">
+             <ul style="margin-top:8px;">
+               <li><b>Tyres</b>: pressure (cold drops PSI), tread, no cuts/bulges.</li>
+               <li><b>Brakes</b>: lever feel, pads, no leaks; test gently at low speed.</li>
+               <li><b>Lights</b>: headlight, brake light, indicators (visibility matters most in bad weather).</li>
+               <li><b>Chain/belt</b>: tension & lubrication (wet roads wash lube off).</li>
+               <li><b>Fluids</b>: oil level, coolant level, brake fluid.</li>
+               <li><b>Battery</b>: cold reduces performance; check starting strength.</li>
+               <li><b>Heated gear</b>: connectors secure; fuse/lead routed safely.</li>
+               <li><b>Visor</b>: clean + anti-fog/Pinlock; carry a microfibre.</li>
+               <li><b>Fuel</b>: plan for detours; cold/traffic can increase consumption.</li>
+             </ul>
+           </div>
+         </details>
+
+         <details style="margin-top:10px;">
+           <summary>Helpful websites & sources</summary>
+           <div class="small">
+             <ul style="margin-top:8px;">
+               <li><a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (forecast data used here)</li>
+               <li><a href="https://www.metoffice.gov.uk/" target="_blank" rel="noopener">UK Met Office</a> (forecasts & warnings)</li>
+               <li><a href="https://www.nhs.uk/conditions/hypothermia/" target="_blank" rel="noopener">NHS: Hypothermia</a></li>
+               <li><a href="https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/" target="_blank" rel="noopener">NHS: Heat exhaustion / heatstroke</a></li>
+               <li><a href="https://www.gov.uk/weather-warnings" target="_blank" rel="noopener">UK weather warnings</a></li>
+             </ul>
+             <div class="small" style="margin-top:8px;">
+               Cold mode uses the standard metric wind chill equation (effective wind computed from riding speed + wind speed).
+               Heat mode uses an approximate heat index calculation from temperature + humidity.
+             </div>
+           </div>
+         </details>
+       </div>
+
+     </div>
+   </div>
+
+   <footer>
+     This tool provides rough guidance only. If you feel confused, extremely drowsy, stop sweating in heat, or stop shivering in cold — get help and warm/cool immediately.
+   </footer>
+ </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+ const elTemp = document.getElementById("temp");
+ const elBike = document.getElementById("bike");
+ const elWind = document.getElementById("wind");
+ const elTrip = document.getElementById("trip");
+ const elWet  = document.getElementById("wet");
+ const elHum  = document.getElementById("hum");
+ const humidityBlock = document.getElementById("humidityBlock");
+
+ let mode = "cold";
+ const modeCold = document.getElementById("modeCold");
+ const modeHeat = document.getElementById("modeHeat");
+ const modeNote = document.getElementById("modeNote");
+
+ let conditionsMode = "auto";
+ const condAuto   = document.getElementById("condAuto");
+ const condManual = document.getElementById("condManual");
+ const condNote   = document.getElementById("condNote");
+
+ const tWindproof    = document.getElementById("tWindproof");
+ const tHandguards   = document.getElementById("tHandguards");
+ const tHeatedGrips  = document.getElementById("tHeatedGrips");
+ const tHeatedGloves = document.getElementById("tHeatedGloves");
+ const tHeatedJacket = document.getElementById("tHeatedJacket");
+
+ const feelsEl   = document.getElementById("feels");
+ const feelsPill = document.getElementById("feelsPill");
+ const detailsEl = document.getElementById("details");
+ const breakdownEl = document.getElementById("breakdown");
+ const levelTagEl = document.getElementById("levelTag");
+ const duringRideEl = document.getElementById("duringRide");
+
+ const gearTag     = document.getElementById("gearTag");
+ const gearSummary = document.getElementById("gearSummary");
+ const gearList    = document.getElementById("gearList");
+ const riskList    = document.getElementById("riskList");
+
+ const timeHands     = document.getElementById("timeHands");
+ const timeCore      = document.getElementById("timeCore");
+ const timeHandsNote = document.getElementById("timeHandsNote");
+ const timeCoreNote  = document.getElementById("timeCoreNote");
+
+ const timeHypo = document.getElementById("timeHypo");
+ const timeHypoNote = document.getElementById("timeHypoNote");
+
+ const timeHyper = document.getElementById("timeHyper");
+ const timeHyperNote = document.getElementById("timeHyperNote");
+
+ const kpiHands = document.getElementById("kpiHands");
+ const kpiCore  = document.getElementById("kpiCore");
+ const kpiHypo  = document.getElementById("kpiHypo");
+ const kpiHyper = document.getElementById("kpiHyper");
+
+ const locInput = document.getElementById("loc");
+ const forecastBtn = document.getElementById("getForecast");
+ const forecastStatus = document.getElementById("forecastStatus");
+
+ const hourStrip = document.getElementById("hourStrip");
+ const stripStatus = document.getElementById("stripStatus");
+ let hourly = null;
+
+ // Strong color helpers (RED -> AMBER -> GREEN)
+ const RED = [255, 70, 70];
+ const AMB = [255, 170, 40];
+ const GRN = [70, 200, 90];
+
+ const clamp01 = (x) => Math.max(0, Math.min(1, x));
+ const lerp = (a,b,t) => a + (b-a)*t;
+
+ function mixRGB(c1, c2, t){
+   const r = lerp(c1[0], c2[0], t);
+   const g = lerp(c1[1], c2[1], t);
+   const b = lerp(c1[2], c2[2], t);
+   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+ }
+ function triGradient(t){
+   t = clamp01(t);
+   if (t < 0.5) return mixRGB(RED, AMB, t/0.5);
+   return mixRGB(AMB, GRN, (t-0.5)/0.5);
+ }
+ function applyPanelColor(el, t){
+   el.style.backgroundColor = triGradient(t);
+   el.style.borderColor = "rgba(0,0,0,.18)";
+ }
+
+ function feelsToTCold(wc){ return clamp01((wc - (-10)) / (12 - (-10))); }
+ function feelsToTHeat(hi){ return 1 - clamp01((hi - 24) / (41 - 24)); }
+
+ function timeToT(mins){ return clamp01((mins - 10) / (120 - 10)); }
+ function hypoToT(mins){ return clamp01((mins - 45) / (360 - 45)); }
+ function hyperToT(mins){ return clamp01((mins - 30) / (240 - 30)); }
+
+ function autoConditionFromWeathercode(code){
+   if (code == null || Number.isNaN(code)) return null;
+   if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "freezing";
+   if (code === 66 || code === 67) return "freezing";
+   if ((code >= 51 && code <= 65) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)) return "wet";
+   return "dry";
+ }
+
+ function windChillC(Tc, mphEffective){
+   const V = mphEffective * 1.60934; // km/h
+   return 13.12 + 0.6215*Tc - 11.37*Math.pow(V, 0.16) + 0.3965*Tc*Math.pow(V, 0.16);
+ }
+
+ function wetPenaltyC(mode){
+   if (mode === "wet") return 4;
+   if (mode === "freezing") return 7;
+   return 0;
+ }
+
+ function warmthBonusC(){
+   let bonus = 0;
+   if (tWindproof.checked) bonus += 1.5;
+   if (tHandguards.checked) bonus += 0.8;
+   if (tHeatedGrips.checked) bonus += 0.6;
+   if (tHeatedGloves.checked) bonus += 1.2;
+   if (tHeatedJacket.checked) bonus += 2.5;
+   return bonus;
+ }
+
+ function heatIndexC(Tc, rh){
+   rh = Math.max(0, Math.min(100, rh));
+   const Tf = (Tc * 9/5) + 32;
+   if (Tf < 80 || rh < 40) return Tc;
+
+   const T = Tf, R = rh;
+   let HI =
+     -42.379 +
+     2.04901523*T +
+     10.14333127*R +
+     -0.22475541*T*R +
+     -0.00683783*T*T +
+     -0.05481717*R*R +
+     0.00122874*T*T*R +
+     0.00085282*T*R*R +
+     -0.00000199*T*T*R*R;
+
+   return (HI - 32) * 5/9;
+ }
+
+ function adviceCold(wcEffective){
+   if (wcEffective >= 12){
+     return { level:"Light", summary:"Generally comfortable. Still protect eyes/neck from wind.",
+       gear:["Summer gloves or light riding gloves","Textile/mesh jacket with armor","Normal riding jeans/pants","Neck tube/buff optional"],
+       risks:["Mild dryness/irritation (eyes, lips) from wind","Fatigue over long rides in cool air"]
+     };
+   }
+   if (wcEffective >= 5){
+     return { level:"Layer up", summary:"Cool at speed. Hands and neck get cold first—block drafts.",
+       gear:["3-season gloves (windproof) or add glove liners","Textile jacket with a thin mid-layer","Neck gaiter / buff (big difference)","Windproof base layer on torso"],
+       risks:["Cold hands can reduce fine control (brake/throttle feel)","If you get wet, chilling can ramp up quickly"]
+     };
+   }
+   if (wcEffective >= -2){
+     return { level:"Cold", summary:"Plan for numb fingers. Windproof outer + insulation strongly recommended.",
+       gear:["Winter gloves OR 3-season gloves + insulated liners","Thermal base layer + insulating mid-layer","Windproof jacket/pants (or rain shell as wind blocker)","Warm socks + insulated boots","Neck gaiter/balaclava"],
+       risks:["Numbness/tingling in fingers can start quickly","Reduced grip strength + slower emergency responses","Early hypothermia possible on long rides (shivering, clumsiness)"]
+     };
+   }
+   if (wcEffective >= -10){
+     return { level:"Very cold", summary:"Heated gear becomes the ‘easy mode’. Without it, discomfort and numbness arrive quickly.",
+       gear:["Heated grips and/or heated gloves (big upgrade)","Heated jacket liner/vest (or thick insulating mid-layer)","Windproof outer layer everywhere (including pants)","Balaclava + sealed collar (stop airflow at neck)","Handguards if you have them"],
+       risks:["Rapid loss of finger dexterity → increased crash risk","Shivering can interfere with smooth control","Hypothermia risk increases with duration and wetness"]
+     };
+   }
+   return { level:"Extreme cold", summary:"Strongly consider heated gear or shortening the ride. Warm-up breaks matter.",
+     gear:["Heated gloves + heated jacket liner (high priority)","Waterproof/windproof shells to stop wind + wet","Balaclava + sealed cuffs/waist to stop drafts","Frequent warm-up breaks; avoid long exposure"],
+     risks:["Fast-onset numbness → reduced control and higher crash risk","High hypothermia risk (especially if wet or tired)","Frostbite possible on exposed skin in extreme cold/wind","If confused, very sleepy, or stop shivering: get warm and seek help"]
+   };
+ }
+
+ function adviceHeat(hiC){
+   if (hiC < 27){
+     return { level:"Low heat", summary:"Usually fine. Still hydrate and ventilate gear.",
+       gear:["Vented jacket (mesh) with armor","Light base layer that wicks sweat","Hydration (water)"],
+       risks:["Dehydration on long rides","Sunburn/UV exposure"]
+     };
+   }
+   if (hiC < 32){
+     return { level:"Caution", summary:"Heat builds up at stops. Drink often; avoid overdressing.",
+       gear:["Mesh/vented gear + moisture-wicking layer","Consider cooling neck tube / evaporative vest","Plan shade breaks"],
+       risks:["Heat exhaustion possible (headache, nausea, heavy sweating)","Reduced concentration"]
+     };
+   }
+   if (hiC < 40){
+     return { level:"High risk", summary:"Strong heat stress. Breaks + hydration become non-negotiable.",
+       gear:["Maximum ventilation + light colors","Carry extra water/electrolytes","Avoid slow traffic if possible"],
+       risks:["Heat exhaustion likely with duration","Heat cramps, dizziness; decision errors increase"]
+     };
+   }
+   return { level:"Extreme heat", summary:"Consider delaying ride. Heat stroke can be life-threatening.",
+     gear:["Shortest ride possible","Aggressive hydration + cooling plan","Avoid heavy gear without ventilation"],
+     risks:["Heat stroke risk (confusion, collapse)","Rapid dehydration; medical emergency signs"]
+   };
+ }
+
+ function baseTimesCold(wc){
+   if (wc >= 12)  return {hands:[90,180], core:[120,240]};
+   if (wc >= 5)   return {hands:[45,90],  core:[90,180]};
+   if (wc >= -2)  return {hands:[20,45],  core:[45,90]};
+   if (wc >= -10) return {hands:[10,25],  core:[25,60]};
+   return {hands:[5,15], core:[15,40]};
+ }
+
+ function baseHypoCold(wc){
+   if (wc >= 8)   return [360, 9999];
+   if (wc >= 2)   return [180, 360];
+   if (wc >= -5)  return [90, 180];
+   if (wc >= -12) return [45, 120];
+   return [20, 60];
+ }
+
+ function applyColdModifiers(times){
+   let wetMult = 1;
+   if (elWet.value === "wet") wetMult = 0.7;
+   if (elWet.value === "freezing") wetMult = 0.5;
+
+   let handsMult = 1;
+   if (tWindproof.checked) handsMult *= 1.15;
+   if (tHandguards.checked) handsMult *= 1.25;
+   if (tHeatedGrips.checked) handsMult *= 1.35;
+   if (tHeatedGloves.checked) handsMult *= 1.75;
+
+   let coreMult = 1;
+   if (tWindproof.checked) coreMult *= 1.2;
+   if (tHeatedJacket.checked) coreMult *= 1.8;
+
+   const scale = (range, mult) => [
+     Math.max(3, Math.round(range[0] * wetMult * mult)),
+     Math.max(5, Math.round(range[1] * wetMult * mult))
+   ];
+
+   return { hands: scale(times.hands, handsMult), core: scale(times.core, coreMult), wetMult, coreMult };
+ }
+
+ function applyHypoModifiers(range, wetMult, coreMult){
+   const mult = wetMult * (0.85 + (coreMult - 1) * 0.9);
+   const lo = Math.max(10, Math.round(range[0] * mult));
+   const hi = Math.max(lo + 10, Math.round(range[1] * mult));
+   return [lo, hi];
+ }
+
+ function baseHyperHeat(hiC){
+   if (hiC < 27) return [240, 9999];
+   if (hiC < 32) return [120, 240];
+   if (hiC < 40) return [45, 120];
+   return [15, 60];
+ }
+
+ function applyHyperModifiers(range){
+   let mult = 1;
+   if (tWindproof.checked) mult *= 0.75;
+   if (tHeatedJacket.checked) mult *= 0.6;
+   const lo = Math.max(10, Math.round(range[0] * mult));
+   const hi = Math.max(lo + 10, Math.round(range[1] * mult));
+   return [lo, hi];
+ }
+
+ const fmtRangeMin = (r) => `${r[0]}–${r[1]} min`;
+ function fmtRangeSmart(r){
+   const toSmart = (m) => (m >= 120 ? `${Math.round(m/60)}h` : `${m} min`);
+   const hi = Math.min(r[1], 9999);
+   return `${toSmart(r[0])}–${toSmart(hi)}`;
+ }
+
+ function clearStrip(){ hourStrip.innerHTML = ""; }
+ function isDarkBg(rgbStr){
+   const m = rgbStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+   if (!m) return false;
+   const r = +m[1], g = +m[2], b = +m[3];
+   const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
+   return lum < 0.55;
+ }
+
+ function buildHourStrip(){
+   clearStrip();
+
+   if (!hourly || !hourly.time || !hourly.temperature_2m || !hourly.windspeed_10m){
+     stripStatus.textContent = "Load a forecast to populate the strip.";
+     return;
+   }
+
+   const now = new Date();
+   const bikeMph = parseFloat(elBike.value);
+   const hum = parseFloat(elHum.value);
+
+   const idxs = [];
+   for (let i=0; i<hourly.time.length && idxs.length<12; i++){
+     const t = new Date(hourly.time[i]);
+     if (t >= now) idxs.push(i);
+   }
+   if (!idxs.length){
+     stripStatus.textContent = "No upcoming hours found.";
+     return;
+   }
+
+   idxs.forEach((i) => {
+     const t = new Date(hourly.time[i]);
+     const hh = String(t.getHours()).padStart(2,"0");
+     const mm = String(t.getMinutes()).padStart(2,"0");
+
+     const tempC = hourly.temperature_2m[i];
+     const windMph = hourly.windspeed_10m[i] / 1.60934;
+     const rh = (hourly.relativehumidity_2m && hourly.relativehumidity_2m[i] != null)
+       ? hourly.relativehumidity_2m[i]
+       : hum;
+
+     let feelsLike = tempC;
+     if (mode === "cold"){
+       const effectiveMph = Math.max(0, bikeMph + windMph);
+       const wcBase = windChillC(tempC, effectiveMph);
+       const wcEffective = wcBase - wetPenaltyC(elWet.value) + warmthBonusC();
+       feelsLike = wcEffective;
+     } else {
+       feelsLike = heatIndexC(tempC, rh);
+     }
+
+     const tVal = (mode === "cold") ? feelsToTCold(feelsLike) : feelsToTHeat(feelsLike);
+     const bg = triGradient(tVal);
+
+     const chip = document.createElement("div");
+     chip.className = "hourChip";
+     chip.style.backgroundColor = bg;
+     chip.style.color = isDarkBg(bg) ? "#ffffff" : "#101318";
+
+     const sub = (mode === "cold")
+       ? `${tempC.toFixed(0)}° / ${Math.round(windMph)}mph`
+       : `${tempC.toFixed(0)}° / ${Math.round(rh)}%`;
+
+     chip.innerHTML = `
+       <div class="t">${hh}:${mm}</div>
+       <div class="m">${feelsLike.toFixed(0)}°C feels</div>
+       <div class="s">${sub}</div>
+     `;
+
+     chip.addEventListener("click", () => {
+       stripStatus.textContent = `Preview ${hh}:${mm} → feels like ~${feelsLike.toFixed(0)}°C (main box stays “now”)`;
+     });
+
+     hourStrip.appendChild(chip);
+   });
+
+   stripStatus.textContent = "Next 12 hours loaded. Tap a block to preview.";
+ }
+
+ function setConditionsMode(m){
+   conditionsMode = m;
+   condAuto.classList.toggle("active", m === "auto");
+   condManual.classList.toggle("active", m === "manual");
+   elWet.disabled = (m === "auto");
+   condNote.textContent =
+     m === "auto"
+       ? "Auto mode uses the forecast to set conditions."
+       : "Manual mode: forecast will not override your choice.";
+   calculate();
+ }
+ condAuto.addEventListener("click", () => setConditionsMode("auto"));
+ condManual.addEventListener("click", () => setConditionsMode("manual"));
+
+ function setMode(m){
+   mode = m;
+   modeCold.classList.toggle("active", m === "cold");
+   modeHeat.classList.toggle("active", m === "heat");
+
+   const isHeat = (m === "heat");
+   modeNote.textContent = isHeat
+     ? "Heat mode uses an approximate heat index from temperature + humidity."
+     : "Cold mode uses wind chill with effective wind (bike speed + headwind).";
+
+   humidityBlock.style.display = isHeat ? "block" : "none";
+
+   kpiHands.style.display = isHeat ? "none" : "block";
+   kpiCore.style.display  = isHeat ? "none" : "block";
+   kpiHypo.style.display  = isHeat ? "none" : "block";
+   kpiHyper.style.display = isHeat ? "block" : "none";
+
+   calculate();
+   if (hourly) buildHourStrip();
+ }
+ modeCold.addEventListener("click", () => setMode("cold"));
+ modeHeat.addEventListener("click", () => setMode("heat"));
+
+ async function getForecast(){
+   const q = (locInput.value || "").trim();
+   if (!q){
+     forecastStatus.textContent = "Type a town/city first.";
+     return;
+   }
+
+   forecastStatus.textContent = "Searching location…";
+   stripStatus.textContent = "Loading…";
+   clearStrip();
+   hourly = null;
+
+   try{
+     const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`;
+     const geoRes = await fetch(geoUrl);
+     if (!geoRes.ok) throw new Error("Geocoding failed");
+     const geo = await geoRes.json();
+     if (!geo.results || !geo.results.length) {
+       forecastStatus.textContent = "Location not found. Try a nearby city name.";
+       stripStatus.textContent = "—";
+       return;
+     }
+
+     const { latitude, longitude, name, country } = geo.results[0];
+     forecastStatus.textContent = `Fetching weather for ${name}, ${country}…`;
+
+     const wUrl =
+       `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
+       `&current_weather=true&hourly=temperature_2m,windspeed_10m,relativehumidity_2m&forecast_days=2&timezone=auto`;
+
+     const wRes = await fetch(wUrl);
+     if (!wRes.ok) throw new Error("Weather fetch failed");
+     const w = await wRes.json();
+
+     if (!w.current_weather){
+       forecastStatus.textContent = "Couldn’t read current weather. Try again.";
+       stripStatus.textContent = "—";
+       return;
+     }
+
+     const tempC = w.current_weather.temperature;
+     const windMph = w.current_weather.windspeed / 1.60934;
+     elTemp.value = Number(tempC).toFixed(1);
+     elWind.value = Math.round(windMph);
+
+     hourly = w.hourly;
+
+     if (hourly && hourly.relativehumidity_2m && hourly.time){
+       const now = new Date();
+       let idx = 0;
+       for (let i=0; i<hourly.time.length; i++){
+         const t = new Date(hourly.time[i]);
+         if (t >= now) { idx = i; break; }
+       }
+       const rh = hourly.relativehumidity_2m[idx];
+       if (rh != null && !Number.isNaN(rh)) elHum.value = Math.round(rh);
+     }
+
+     const code = w.current_weather.weathercode;
+     const autoCond = autoConditionFromWeathercode(code);
+     if (autoCond && conditionsMode === "auto") elWet.value = autoCond;
+
+     const condText =
+       (elWet.value === "dry") ? "Dry" :
+       (elWet.value === "wet") ? "Wet/Rain" :
+       "Freezing";
+
+     forecastStatus.textContent =
+       `Loaded: ${name}, ${country} • Now: ${tempC.toFixed(1)}°C • wind ~${Math.round(windMph)} mph • conditions: ${condText}`;
+
+     calculate();
+     buildHourStrip();
+   } catch(e){
+     forecastStatus.textContent = "Forecast unavailable (network blocked or API error). You can still enter values manually.";
+     stripStatus.textContent = "Strip unavailable.";
+     clearStrip();
+   }
+ }
+ forecastBtn.addEventListener("click", getForecast);
+
+ function duringRideText(tripMin, items){
+   const hits = items
+     .filter(it => tripMin >= it.loMin)
+     .map(it => `• ${it.meaning} (≈${it.loMin} min+)`);
+   if (!hits.length) return `During your ${tripMin} min trip: likely OK on time alone (still depends on you and conditions).`;
+   return `During your ${tripMin} min trip, you may hit:\n${hits.join("\n")}`;
+ }
+
+ function calculate(){
+   const Tc = parseFloat(elTemp.value);
+   const bike = parseFloat(elBike.value);
+   const wind = parseFloat(elWind.value);
+   const trip = parseFloat(elTrip.value);
+   const hum = parseFloat(elHum.value);
+
+   const invalid = [Tc, bike, wind, trip].some(v => Number.isNaN(v));
+   if (invalid || trip <= 0) {
+     feelsEl.textContent = "Feels like: —";
+     detailsEl.textContent = "Enter values to calculate.";
+     breakdownEl.textContent = "—";
+     levelTagEl.textContent = "—";
+     duringRideEl.textContent = "—";
+
+     gearTag.textContent = "—";
+     gearSummary.textContent = "—";
+     gearList.innerHTML = "";
+     riskList.innerHTML = "";
+
+     timeHands.textContent = "—";
+     timeCore.textContent = "—";
+     timeHypo.textContent = "—";
+     timeHyper.textContent = "—";
+
+     timeHandsNote.textContent = "—";
+     timeCoreNote.textContent = "—";
+     timeHypoNote.textContent = "—";
+     timeHyperNote.textContent = "—";
+
+     applyPanelColor(feelsPill, 0.5);
+     applyPanelColor(kpiHands, 0.5);
+     applyPanelColor(kpiCore, 0.5);
+     applyPanelColor(kpiHypo, 0.5);
+     applyPanelColor(kpiHyper, 0.5);
+     return;
+   }
+
+   const condTxt =
+     (elWet.value === "dry") ? "Dry" :
+     (elWet.value === "wet") ? "Wet/Rain" :
+     "Snow/Freezing";
+
+   if (mode === "cold"){
+     const effectiveMph = Math.max(0, bike + wind);
+     const wcBase = windChillC(Tc, effectiveMph);
+     const penalty = wetPenaltyC(elWet.value);
+     const bonus = warmthBonusC();
+     const wcEffective = wcBase - penalty + bonus;
+
+     applyPanelColor(feelsPill, feelsToTCold(wcEffective));
+
+     const delta = wcEffective - Tc;
+
+     feelsEl.textContent = `Feels like: ${wcEffective.toFixed(1)} °C`;
+     detailsEl.textContent =
+       `Now: ${Tc.toFixed(1)}°C • Wind: ${Math.round(wind)} mph • Riding: ${Math.round(bike)} mph • Condition: ${condTxt}`;
+
+     breakdownEl.textContent =
+       `heatLossWind=${Math.round(effectiveMph)}mph  |  baseChill=${wcBase.toFixed(1)}°C  |  wetPenalty=-${penalty.toFixed(1)}°C  |  gearBonus=+${bonus.toFixed(1)}°C  |  netΔ=${delta.toFixed(1)}°C`;
+
+     const adv = adviceCold(wcEffective);
+     levelTagEl.textContent = `Level: ${adv.level}`;
+     gearTag.textContent = adv.level;
+     gearSummary.textContent = adv.summary;
+     gearList.innerHTML = adv.gear.map(x => `<li>${x}</li>`).join("");
+     riskList.innerHTML = adv.risks.map(x => `<li>${x}</li>`).join("");
+
+     const baseTimes = baseTimesCold(wcEffective);
+     const mod = applyColdModifiers(baseTimes);
+     timeHands.textContent = fmtRangeMin(mod.hands);
+     timeCore.textContent = fmtRangeMin(mod.core);
+
+     const wetText = elWet.value === "dry" ? "Dry" : (elWet.value === "wet" ? "Wet" : "Freezing/wet");
+     timeHandsNote.textContent = `${wetText} • Hand gear changes this a lot`;
+     timeCoreNote.textContent = `${wetText} • Core heat & windproof matter most`;
+
+     const baseHypo = baseHypoCold(wcEffective);
+     const hypoMod = applyHypoModifiers(baseHypo, mod.wetMult, mod.coreMult);
+
+     if (baseHypo[1] >= 9999 && wcEffective >= 8) {
+       timeHypo.textContent = "Low for most short rides";
+       timeHypoNote.textContent = "Still possible if you’re wet, exhausted, or riding for hours";
+     } else {
+       timeHypo.textContent = fmtRangeSmart(hypoMod);
+       timeHypoNote.textContent = "Depends on wetness, duration, fatigue, and your health";
+     }
+
+     applyPanelColor(kpiHands, timeToT(mod.hands[0]));
+     applyPanelColor(kpiCore,  timeToT(mod.core[0]));
+     applyPanelColor(kpiHypo,  hypoToT(hypoMod[0]));
+
+     const items = [
+       { loMin: mod.hands[0], meaning:"Cold/numb hands likely" },
+       { loMin: mod.core[0],  meaning:"Core chill likely" }
+     ];
+     if (!(baseHypo[1] >= 9999 && wcEffective >= 8)) {
+       items.push({ loMin: hypoMod[0], meaning:"Hypothermia risk zone possible" });
+     }
+     duringRideEl.textContent = duringRideText(trip, items);
+
+     timeHyper.textContent = "—";
+     timeHyperNote.textContent = "Heat mode only";
+     applyPanelColor(kpiHyper, 0.5);
+
+     if (hourly) buildHourStrip();
+
+   } else {
+     const rh = Number.isNaN(hum) ? 60 : hum;
+     const hiC = heatIndexC(Tc, rh);
+
+     applyPanelColor(feelsPill, feelsToTHeat(hiC));
+
+     feelsEl.textContent = `Feels like: ${hiC.toFixed(1)} °C`;
+     detailsEl.textContent =
+       `Now: ${Tc.toFixed(1)}°C • Humidity: ${Math.round(rh)}% • Riding: ${Math.round(bike)} mph`;
+
+     breakdownEl.textContent =
+       `heatIndex≈${hiC.toFixed(1)}°C  |  temp=${Tc.toFixed(1)}°C  |  RH=${Math.round(rh)}%  |  (wind helps while moving; traffic increases risk)`;
+
+     const adv = adviceHeat(hiC);
+     levelTagEl.textContent = `Level: ${adv.level}`;
+     gearTag.textContent = adv.level;
+     gearSummary.textContent = adv.summary;
+     gearList.innerHTML = adv.gear.map(x => `<li>${x}</li>`).join("");
+     riskList.innerHTML = adv.risks.map(x => `<li>${x}</li>`).join("");
+
+     const baseHyper = baseHyperHeat(hiC);
+     const hyperMod = applyHyperModifiers(baseHyper);
+
+     if (baseHyper[1] >= 9999 && hiC < 27) {
+       timeHyper.textContent = "Low for most short rides";
+       timeHyperNote.textContent = "Still hydrate; heat builds up at stops and in heavy gear";
+     } else {
+       timeHyper.textContent = fmtRangeSmart(hyperMod);
+       timeHyperNote.textContent = "Heat risk increases with humidity, gear, and stop-start traffic";
+     }
+
+     applyPanelColor(kpiHyper, hyperToT(hyperMod[0]));
+
+     const items = [];
+     if (!(baseHyper[1] >= 9999 && hiC < 27)) {
+       items.push({ loMin: hyperMod[0], meaning:"Heat illness risk zone possible" });
+     }
+     items.push({ loMin: 45, meaning:"Dehydration/fatigue likely (drink & take breaks)" });
+     duringRideEl.textContent = duringRideText(trip, items);
+
+     timeHands.textContent = "—";
+     timeCore.textContent = "—";
+     timeHypo.textContent = "—";
+     timeHandsNote.textContent = "Heat mode only";
+     timeCoreNote.textContent = "Heat mode only";
+     timeHypoNote.textContent = "Heat mode only";
+
+     applyPanelColor(kpiHands, 0.5);
+     applyPanelColor(kpiCore, 0.5);
+     applyPanelColor(kpiHypo, 0.5);
+
+     if (hourly) buildHourStrip();
+   }
+ }
+
+ [elTemp, elBike, elWind, elTrip, elHum, elWet,
+  tWindproof, tHandguards, tHeatedGrips, tHeatedGloves, tHeatedJacket
+ ].forEach(el => el.addEventListener("input", calculate));
+
+ setConditionsMode("auto");
+ setMode("cold");
+ calculate();
+});
+</script>
+</body>
+</html>
